@@ -3,9 +3,9 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 
 re = 10
-t = 0.25
+t = 1
 wall_v = 1.0
-tolerance = 0.001
+tolerance = 0.01
 delta_x = 1.0
 delta_y = 1.0
 h = delta_x
@@ -25,11 +25,12 @@ fig, ax = plt.subplots()
 fig.set_size_inches(8,6)
 fig.canvas.manager.set_window_title("Lid Cavity")
 
-splot = plt.streamplot(x, y, u, v, cmap='viridis')
-contour = ax.contour(x, y, np.sqrt(v*v + u*u))
+quiv = ax.quiver(x[::5], y[::5], u[::5, ::5], v[::5, ::5], scale=10)
+##splot = plt.streamplot(x, y, u, v, cmap='viridis')
+##contour = ax.contour(x, y, np.sqrt(v*v + u*u))
 
 def updateGrid(frame):
-    global p, u, v, contour, splot
+    global p, u, v, quiv
     in_tolerance = False            
 
     ghost_p[1:-1, 1:-1] = p
@@ -41,7 +42,7 @@ def updateGrid(frame):
     ghost_v[1:-1, [0, -1]] = -v[:, [0, -1]]
     
     ghost_u[1:-1, 1:-1] = u
-    ghost_u[0, 1:-1] =  -u[0,:] + 2*wall_v
+    ghost_u[0, 1:-1] =  -1*(u[0,:]) + 2*wall_v
     ghost_u[-1, 1:-1] = -u[-1,:]
     ghost_u[1:-1, [0, -1]] = -u[:, [0, -1]]
 
@@ -90,11 +91,13 @@ def updateGrid(frame):
     u = u - t*(right_p - left_p)/(2*delta_x) ## correction
     v = v - t*(up_p - down_p)/(2*delta_y) ## correction
     
-    ax.clear()
-    contour = ax.contour(x, y, np.sqrt(v**2 + u**2))
-    splot = plt.streamplot(x, y, u, v, cmap='viridis')
+    quiv.set_UVC(u[::5, ::5], v[::5, ::5])
+    ##ax.clear()
+    ##contour = ax.contour(x, y, np.sqrt(v**2 + u**2))
+    ##splot = plt.streamplot(x, y, u, v, cmap='viridis')
 
-    return(contour,splot)
+    ##return(contour,splot)
+    return(quiv)
 
 ani = animation.FuncAnimation(fig, updateGrid, frames = 999, interval = 100)
 plt.show()

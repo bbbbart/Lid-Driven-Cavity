@@ -4,17 +4,19 @@ import matplotlib.animation as animation
 
 re = 10
 t = 0.25
+wall_v = 1.0
+tolerance = 0.001
+delta_x = 1.0
+delta_y = 1.0
+h = delta_x
 
 u = np.zeros((100,100))
 v = np.zeros((100,100))
 p = np.zeros((100,100))
 
-wall_v = 1.0
-
 ghost_u = np.zeros((102,102))
 ghost_v = np.zeros((102,102))
 ghost_p = np.zeros((102,102))
-tolerance = 0.001
 
 x = np.linspace(-50, 50 , 100)
 y = np.linspace(-50, 50, 100)
@@ -31,16 +33,17 @@ def updateGrid(frame):
     in_tolerance = False            
 
     ghost_p[1:-1, 1:-1] = p
-    ghost_p[0::len(ghost_p)-1, 1:-1] =  p[0::len(p)-1]
-    ghost_p[1:-1, 0::len(ghost_p)-1] = p[:, 0::len(p)-1]
+    ghost_p[[0,-1], 1:-1] =  p[[0, -1], :]
+    ghost_p[1:-1, [0, -1]] = p[:, [0, -1]]
 
     ghost_v[1:-1, 1:-1] = v
-    ghost_v[0::len(ghost_v)-1, 1:-1] = -v[0::len(v)-1]
-    ghost_v[1:-1, 0::len(ghost_v)-1] = -v[:, 0::len(v)-1]
+    ghost_v[[0, -1], 1:-1] = -v[[0, -1], :]
+    ghost_v[1:-1, [0, -1]] = -v[:, [0, -1]]
     
     ghost_u[1:-1, 1:-1] = u
-    ghost_u[0, 1:len(ghost_u)-1] =  -u[0,:] + 2*wall_v
-    ghost_u[1:-1, 0::len(ghost_u)-1] = -u[:, 0::len(u)-1]
+    ghost_u[0, 1:-1] =  -u[0,:] + 2*wall_v
+    ghost_u[-1, 1:-1] = -u[-1,:]
+    ghost_u[1:-1, [0, -1]] = -u[:, [0, -1]]
 
     up_u = ghost_u[:-2, 1:-1] 
     down_u = ghost_u[2:, 1:-1] 
@@ -58,37 +61,37 @@ def updateGrid(frame):
     left_p = ghost_p[1:-1, :-2] 
     right_p = ghost_p[1:-1, 2:] 
 
-    old_v = v
-    old_u = u
+    old_v = v.copy()
+    old_u = u.copy()
     
-    u = old_u + t*(-u*(left_u - right_u)/2 - v*(up_u - down_u)/2) + (1/re)*(left_u + right_u + up_u + down_u - 4*u) ## horiz velocity
-    v = old_v + t*(-old_u*(left_v - right_v)/2 - old_v*(up_v - down_v)/2) + (1/re)*(left_v + right_v + up_v + down_v - 4*v) ## vert velocity
-    b = (1/t)*(right_u - left_u + up_v - down_v)/2 ## check error
+    u = old_u + t*(-old_u*(left_u - right_u)/(2*delta_x) - old_v*(up_u - down_u)/(2*delta_y)) + (1/re)*(((left_u - 2*old_u + right_u)/delta_x**2)+((up_u - 2*old_u + down_u)/delta_y**2)) ## horiz velocity
+    v = old_v + t*(-old_u*(left_v - right_v)/(2*delta_x) - old_v*(up_v - down_v)/(2*delta_y)) + (1/re)*(((left_v - 2*old_v + right_v)/delta_x**2)+((up_v - 2*old_v + down_v)/delta_y**2)) ## horiz velocity
+    b = (1/t)*((right_u - left_u)/(2*delta_x) + (up_v - down_v)/(2*delta_y)) ## check error
 
     while not in_tolerance:
-        p_new = (up_p + down_p + left_p + right_p - b)/4 ## pressure solver
-        if (p_new[50,50] - p[50,50]) > tolerance:
+        p_new = (up_p + down_p + left_p + right_p - (h**2)*b)/4 ## pressure solver
+        if (np.max(np.abs(p_new - p)) > tolerance):
             p = p_new
 
-            ghost_p[0::len(ghost_p)-1, 1:-1] =  p[0::len(p)-1]
-            ghost_p[1:-1, 0::len(ghost_p)-1] = p[:, 0::len(p)-1]
-
+            ghost_p[[0,-1], 1:-1] =  p[[0, -1], :]
+            ghost_p[1:-1, [0, -1]] = p[:, [0, -1]]
             ghost_p[1:-1, 1:-1] = p
+
             up_p = ghost_p[:-2, 1:-1] 
             down_p = ghost_p[2:, 1:-1] 
             left_p = ghost_p[1:-1, :-2] 
             right_p = ghost_p[1:-1, 2:] 
 
-            p_new = (up_p + down_p + left_p + right_p - b)/2 ## pressure solver
+            p_new = (up_p + down_p + left_p + right_p - (h**2)*b)/4 ## pressure solver
         else:
             in_tolerance = True
             p = p_new
 
-    u = u - t*(right_p - left_p)/2 ## correction
-    v = v - t*(up_p - down_p)/2 ## correction
+    u = u - t*(right_p - left_p)/(2*delta_x) ## correction
+    v = v - t*(up_p - down_p)/(2*delta_y) ## correction
     
     ax.clear()
-    contour = ax.contour(x, y, np.sqrt(v*v + u*u))
+    contour = ax.contour(x, y, np.sqrt(v**2 + u**2))
     splot = plt.streamplot(x, y, u, v, cmap='viridis')
 
     return(contour,splot)

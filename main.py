@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
+from numba import njit
 
 re = 10
 t = 0.005
@@ -26,11 +27,34 @@ fig, ax = plt.subplots()
 fig.set_size_inches(8,6)
 fig.canvas.manager.set_window_title("Lid Cavity")
 
-quiv = ax.quiver(x[::10], y[::10], u[::10, ::10], v[::10, ::10], scale=25)
+quiv = ax.quiver(x[::10], y[::10], u[::10, ::10], v[::10, ::10], scale=15)
+
+@njit
+def pressureSolver(grid, ghost, b_):
+    for i in range(max_i):
+        error = 0
+        ghost[0, 1:-1] =  grid[0, :]
+        ghost[-1, 1:-1] =  grid[-1, :]
+        ghost[1:-1, -1] = grid[:, -1]
+        ghost[1:-1, 0] = grid[:, 0]
+        grid = ghost[1:-1, 1:-1] 
+        for y in range(1, 101):
+            for x in range(1, 101):
+                old_p = ghost[y,x]
+
+                ghost[y,x] = (ghost[y + 1, x] + ghost[y - 1, x] + ghost[y, x - 1] + ghost[y, x + 1] - (h**2)*b_[y-1,x-1])/4 ## pressure solver
+            
+                error = max(error, abs(ghost[y,x]-old_p))
+
+        if (error < tolerance):
+            return ghost, grid
+            break
+    return ghost, grid
+
 
 def updateGrid(frame):
-    for i in range(150):
-        global p, u, v, quiv
+    for i in range(250):
+        global p, u, v, quiv, ghost_p
         u[0,:] = 1.0
         v[0,:] = 0.0
 
@@ -79,22 +103,7 @@ def updateGrid(frame):
 
         b = (1/t)*((right_u - left_u)/(2*delta_x) + (down_v - up_v)/(2*delta_y)) ## check error
 
-        for i in range(max_i):
-            error = 0
-            p = ghost_p[1:-1, 1:-1]
-            ghost_p[[0,-1], 1:-1] =  p[[0, -1], :]
-            ghost_p[1:-1, [0, -1]] = p[:, [0, -1]]
-            ghost_p[1:-1, 1:-1] = p
-            for y in range(1, 100):
-                for x in range(1, 100):
-                    old_p = ghost_p[y,x]
-
-                    ghost_p[y,x] = (ghost_p[y + 1, x] + ghost_p[y - 1, x] + ghost_p[y, x - 1] + ghost_p[y, x + 1] - (h**2)*b[y,x])/4 ## pressure solver
-             
-                    error = max(error, abs(ghost_p[y,x]-old_p))
-
-            if (error < tolerance):
-                break
+        ghost_p, p = pressureSolver(p, ghost_p, b)
 
         up_p = ghost_p[:-2, 1:-1] 
         down_p = ghost_p[2:, 1:-1] 

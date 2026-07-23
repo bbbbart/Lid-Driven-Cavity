@@ -1,13 +1,13 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
-from numba import njit
+from numba import jit
 
 re = 10
 t = 0.005
 wall_v = 1.0
 tolerance = 0.0001
-max_i = 2500
+max_i = 300
 delta_x = 1.0
 delta_y = 1.0
 h = delta_x
@@ -29,7 +29,7 @@ fig.canvas.manager.set_window_title("Lid Cavity")
 
 quiv = ax.quiver(x[::10], y[::10], u[::10, ::10], v[::10, ::10], scale=15)
 
-@njit
+@jit
 def pressureSolver(grid, ghost, b_):
     for i in range(max_i):
         error = 0
@@ -37,13 +37,13 @@ def pressureSolver(grid, ghost, b_):
         ghost[-1, 1:-1] =  grid[-1, :]
         ghost[1:-1, -1] = grid[:, -1]
         ghost[1:-1, 0] = grid[:, 0]
-        grid = ghost[1:-1, 1:-1] 
         for y in range(1, 101):
             for x in range(1, 101):
                 old_p = ghost[y,x]
 
-                ghost[y,x] = (ghost[y + 1, x] + ghost[y - 1, x] + ghost[y, x - 1] + ghost[y, x + 1] - (h**2)*b_[y-1,x-1])/4 ## pressure solver
-            
+                g = (ghost[y + 1, x] + ghost[y - 1, x] + ghost[y, x - 1] + ghost[y, x + 1] - (h**2)*b_[y-1,x-1])/4 ## pressure solver
+                ghost[y,x] = ghost[y,x] + 1.7*(g - ghost[y,x])
+
                 error = max(error, abs(ghost[y,x]-old_p))
 
         if (error < tolerance):
@@ -104,6 +104,7 @@ def updateGrid(frame):
         b = (1/t)*((right_u - left_u)/(2*delta_x) + (down_v - up_v)/(2*delta_y)) ## check error
 
         ghost_p, p = pressureSolver(p, ghost_p, b)
+        p = ghost_p[1:-1, 1:-1]
 
         up_p = ghost_p[:-2, 1:-1] 
         down_p = ghost_p[2:, 1:-1] 

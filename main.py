@@ -7,8 +7,8 @@ from numba import jit
 re = 10
 t = 0.005
 wall_v = 1.0
-tolerance = 0.0001
-max_i = 1000
+tolerance = 0.001
+max_i = 5000
 delta_x = 1.0
 delta_y = 1.0
 h = delta_x
@@ -16,6 +16,7 @@ h = delta_x
 u = np.zeros((100,100))
 v = np.zeros((100,100))
 p = np.zeros((100,100))
+total_v = np.zeros((100,100))
 
 ghost_u = np.zeros((102,102))
 ghost_v = np.zeros((102,102))
@@ -29,16 +30,18 @@ fig.set_size_inches(8,6)
 fig.canvas.manager.set_window_title("Velocity Quiver Plot")
 ax[0,0].set_aspect('equal')
 ax[0,1].set_aspect('equal')
+ax[1,0].set_aspect('equal')
 
 quiv = ax[0,0].quiver(x[::10], y[::10], u[::10, ::10], v[::10, ::10], scale=15, pivot='mid')
-pressure = ax[0, 1].imshow(p, cmap='viridis', extent=[-50, 50, -50, 50], interpolation = 'bilinear')
+pressure = ax[0, 1].imshow(np.fliplr(p), cmap='viridis', extent=[-50, 50, -50, 50], interpolation = 'bilinear')
+v_map = ax[1,0].imshow(np.fliplr(total_v), vmin=0, vmax=1.0, cmap='viridis', extent=[-50, 50, -50, 50], interpolation = 'bilinear')
 plt.colorbar(pressure)
+plt.colorbar(v_map)
 
 @jit
 def pressureSolver(grid, ghost, b_):
     for i in range(max_i):
         error = 0
-        ghost[0,0] = 0
         ghost[0, 1:-1] =  grid[0, :]
         ghost[-1, 1:-1] =  grid[-1, :]
         ghost[1:-1, -1] = grid[:, -1]
@@ -52,14 +55,12 @@ def pressureSolver(grid, ghost, b_):
 
                 error = max(error, abs(ghost[y,x]-old_p))
         if (error < tolerance):
-            ghost[0,0] = 0
             ghost[0, 1:-1] =  grid[0, :]
             ghost[-1, 1:-1] =  grid[-1, :]
             ghost[1:-1, -1] = grid[:, -1]
             ghost[1:-1, 0] = grid[:, 0]
             return ghost, grid
             break
-    ghost[0,0] = 0
     ghost[0, 1:-1] =  grid[0, :]
     ghost[-1, 1:-1] =  grid[-1, :]
     ghost[1:-1, -1] = grid[:, -1]
@@ -68,7 +69,7 @@ def pressureSolver(grid, ghost, b_):
 
 def updateGrid(frame):
     for i in range(250):
-        global p, u, v, quiv, ghost_p
+        global p, u, v, quiv, ghost_p, total_v
         u[0,:] = 1.0
         v[0,:] = 0.0
 
@@ -128,9 +129,11 @@ def updateGrid(frame):
         u = u - t*(right_p - left_p)/(2*delta_x) ## correction
         v = v - t*(down_p - up_p)/(2*delta_y) ## correction
 
+    total_v = np.sqrt(u**2 + v**2)
     quiv.set_UVC(u[::10, ::10], v[::10, ::10])
-    pressure.set_data(p)
-    return(pressure,)
+    pressure.set_data(np.fliplr(p))
+    v_map.set_data(np.fliplr(total_v))
+    return(pressure,v_map, quiv)
 
 ani = animation.FuncAnimation(fig, updateGrid, frames = 999, interval = 25)
 plt.show()

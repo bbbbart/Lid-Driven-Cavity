@@ -4,7 +4,7 @@ import matplotlib.animation as animation
 import matplotlib.widgets as widget
 from numba import jit
 
-re = 10
+re = 500
 t = 0.005
 wall_v = 1.0
 tolerance = 0.001
@@ -17,6 +17,7 @@ u = np.zeros((100,100))
 v = np.zeros((100,100))
 p = np.zeros((100,100))
 total_v = np.zeros((100,100))
+vorticity = np.zeros((100,100))
 
 ghost_u = np.zeros((102,102))
 ghost_v = np.zeros((102,102))
@@ -25,18 +26,18 @@ ghost_p = np.zeros((102,102))
 x = np.linspace(50, -50, 100)
 y = np.linspace(50, -50, 100)
 
-fig, ax = plt.subplots(2, 2)
+fig, ax = plt.subplots(1, 3)
 fig.set_size_inches(8,6)
 fig.canvas.manager.set_window_title("Velocity Quiver Plot")
-ax[0,0].set_aspect('equal')
-ax[0,1].set_aspect('equal')
-ax[1,0].set_aspect('equal')
+ax[0].set_aspect('equal')
+ax[1].set_aspect('equal')
+ax[2].set_aspect('equal')
 
-quiv = ax[0,0].quiver(x[::10], y[::10], u[::10, ::10], v[::10, ::10], scale=15, pivot='mid')
-pressure = ax[0, 1].imshow(np.fliplr(p), cmap='viridis', extent=[-50, 50, -50, 50], interpolation = 'bilinear')
-v_map = ax[1,0].imshow(np.fliplr(total_v), vmin=0, vmax=1.0, cmap='viridis', extent=[-50, 50, -50, 50], interpolation = 'bilinear')
-plt.colorbar(pressure)
+quiv = ax[0].quiver(x[::10], y[::10], u[::10, ::10], v[::10, ::10], scale=5, pivot='mid')
+v_map = ax[1].imshow(np.fliplr(total_v), vmin=0, vmax=1.0, cmap='viridis', extent=[-50, 50, -50, 50], interpolation = 'bilinear')
+vort_map = ax[2].imshow(np.fliplr(vorticity), cmap='jet', extent=[-50, 50, -50, 50], interpolation = 'bilinear')
 plt.colorbar(v_map)
+plt.colorbar(vort_map)
 
 @jit
 def pressureSolver(grid, ghost, b_):
@@ -61,15 +62,16 @@ def pressureSolver(grid, ghost, b_):
             ghost[1:-1, 0] = grid[:, 0]
             return ghost, grid
             break
-    ghost[0, 1:-1] =  grid[0, :]
-    ghost[-1, 1:-1] =  grid[-1, :]
+    ghost[0, 1:-1] = grid[0, :]
+    ghost[-1, 1:-1] = grid[-1, :]
     ghost[1:-1, -1] = grid[:, -1]
     ghost[1:-1, 0] = grid[:, 0]
+
     return ghost, grid
 
 def updateGrid(frame):
-    for i in range(250):
-        global p, u, v, quiv, ghost_p, total_v
+    for i in range(500):
+        global p, u, v, quiv, ghost_p, total_v, vorticity
         u[0,:] = 1.0
         v[0,:] = 0.0
 
@@ -129,11 +131,19 @@ def updateGrid(frame):
         u = u - t*(right_p - left_p)/(2*delta_x) ## correction
         v = v - t*(down_p - up_p)/(2*delta_y) ## correction
 
+        up_v = ghost_v[:-2, 1:-1] 
+        down_v = ghost_v[2:, 1:-1] 
+        left_u = ghost_u[1:-1, :-2] 
+        right_u = ghost_u[1:-1, 2:]
+
+        vorticity = ((up_v - down_v)/2*delta_x) - ((right_v - left_v)/2*delta_y)
+
+
     total_v = np.sqrt(u**2 + v**2)
     quiv.set_UVC(u[::10, ::10], v[::10, ::10])
-    pressure.set_data(np.fliplr(p))
     v_map.set_data(np.fliplr(total_v))
-    return(pressure,v_map, quiv)
+    vort_map.set_data(np.fliplr(vorticity))
+    return(v_map, quiv)
 
 ani = animation.FuncAnimation(fig, updateGrid, frames = 999, interval = 25)
 plt.show()

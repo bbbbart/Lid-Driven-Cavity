@@ -5,14 +5,16 @@ import matplotlib.widgets as widget
 from numba import jit
 
 re = 500
-t = 0.1
+t = 0.05
 wall_v = 1.0
 tolerance = 0.001
 max_i = 2500
 delta_x = 1.0
 delta_y = 1.0
 h = delta_x
+
 pause = False
+running = False
 
 u = np.zeros((100,100))
 v = np.zeros((100,100))
@@ -29,23 +31,74 @@ y = np.linspace(50, -50, 100)
 
 fig, ax = plt.subplots(1, 3, sharex=True, sharey=True)
 fig.set_size_inches(20, 7)
-fig.canvas.manager.set_window_title("Velocity Quiver Plot")
 ax[0].set_aspect('equal')
 ax[1].set_aspect('equal')
 ax[2].set_aspect('equal')
 
-plt.tight_layout()
+ax[0].set_title("Quiver")        
+ax[1].set_title("Total Velocity")
+ax[2].set_title("Vorticity")
 
 quiv = ax[0].quiver(x[::5], y[::5], u[::5, ::5], v[::5, ::5], scale=8, pivot='mid')
 v_map = ax[1].imshow(np.fliplr(total_v), vmin=0, vmax=0.5, cmap='viridis', extent=[-50, 50, -50, 50], interpolation = 'bilinear')
 vort_map = ax[2].imshow(np.fliplr(vorticity), vmin=-0.1, vmax=0.1, cmap='jet', extent=[-50, 50, -50, 50], interpolation = 'bilinear')
 
+plt.tight_layout()     
+
+re_slider_axes = plt.axes([0.25, 0.6, 0.50, 0.08])
+re_slider = widget.Slider(ax = re_slider_axes, 
+                        label= 'Reynolds Number (Re)', 
+                        valmin = 10, 
+                        valmax = 500)
+
+step_slider_axes = plt.axes([0.25, 0.4, 0.50, 0.08])
+step_slider = widget.Slider(ax = step_slider_axes, 
+                            label= 'Simulation Timestep', 
+                            valmin = 0.05, 
+                            valmax = 1)
+
+start_button_axes = plt.axes([0.44, 0.18, 0.12, 0.06])
+start_button = widget.Button(ax = start_button_axes, 
+                        label = 'Start', 
+                        color = 'lightgray', 
+                        hovercolor = 'gray')
+
 def buttonPresses(event):
-    global pause
+    global pause, running
     if event.key ==  ' ':
       pause = not pause
+    elif event.key == 'r':
+      resetGrid()
+      running = False
+
+def updateRe(val):
+   global re
+   re = re_slider.val
+
+def updateTimestep(val):
+   global t
+   t = step_slider.val
+
+def start(event):
+    global running
+    running = not running
+
+def resetGrid():
+    global u, v, p, total_v, vorticity, ghost_p, ghost_u, ghost_v
+    u = np.zeros((100,100))
+    v = np.zeros((100,100))
+    p = np.zeros((100,100))
+    total_v = np.zeros((100,100))
+    vorticity = np.zeros((100,100))
+
+    ghost_u = np.zeros((102,102))
+    ghost_v = np.zeros((102,102))
+    ghost_p = np.zeros((102,102))
 
 fig.canvas.mpl_connect('key_press_event', buttonPresses)
+step_slider.on_changed(updateTimestep)
+re_slider.on_changed(updateRe)
+start_button.on_clicked(start)
 
 @jit
 def pressureSolver(grid, ghost, b_):
@@ -78,8 +131,16 @@ def pressureSolver(grid, ghost, b_):
         return ghost, grid
 
 def updateGrid(frame):
-    if not pause:
-        for i in range(100):
+    if not pause and running:
+        re_slider_axes.set_visible(False)
+        step_slider_axes.set_visible(False)
+        start_button_axes.set_visible(False)
+
+        ax[0].set_visible(True)        
+        ax[1].set_visible(True)        
+        ax[2].set_visible(True) 
+
+        for i in range(50):
             global p, u, v, quiv, ghost_p, total_v, vorticity
             u[0,:] = 1.0
             v[0,:] = 0.0
@@ -148,7 +209,7 @@ def updateGrid(frame):
             left_u = ghost_u[1:-1, :-2] 
             right_u = ghost_u[1:-1, 2:]
 
-            vorticity = ((up_v - down_v)/2*delta_x) - ((right_v - left_v)/2*delta_y)
+            vorticity = ((up_v - down_v)/(2*delta_x)) - ((right_v - left_v)/(2*delta_y))
 
         ax[0].set_title("Quiver")        
         ax[1].set_title("Total Velocity")
@@ -160,7 +221,15 @@ def updateGrid(frame):
         vort_map.set_data(np.fliplr(vorticity))
         return(v_map, quiv)
 
-    else:
+    elif running and pause:
+        re_slider_axes.set_visible(False)
+        step_slider_axes.set_visible(False)
+        start_button_axes.set_visible(False)
+
+        ax[0].set_visible(True)        
+        ax[1].set_visible(True)        
+        ax[2].set_visible(True) 
+
         ax[0].set_title("Quiver (Paused)")        
         ax[1].set_title("Total Velocity (Paused)")
         ax[2].set_title("Vorticity (Paused)")
@@ -169,5 +238,15 @@ def updateGrid(frame):
         v_map.set_data(np.fliplr(total_v))
         vort_map.set_data(np.fliplr(vorticity))
         return(v_map, quiv)
+    
+    elif not running:
+        re_slider_axes.set_visible(True)
+        step_slider_axes.set_visible(True)
+        start_button_axes.set_visible(True)
+
+        ax[0].set_visible(False)        
+        ax[1].set_visible(False)        
+        ax[2].set_visible(False)   
+    
 ani = animation.FuncAnimation(fig, updateGrid, frames = 999, interval = 25)
 plt.show()

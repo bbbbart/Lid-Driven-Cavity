@@ -1,33 +1,29 @@
-import widgets as wid
+import simulation as sim
+import variables as var
 
 def buttonPresses(event):
-    global pause, running
     if event.key ==  ' ':
-      pause = not pause
+      sim.pause = not sim.pause
     elif event.key == 'r':
       resetGrid()
-      running = False
+      sim.running = False
 
 def updateRe(val):
-   global re
-   re = wid.re_slider.val
+   var.re = sim.re_slider.val
 
 def updateTimestep(val):
-   global t
-   t = wid.step_slider.val
+   var.t = sim.step_slider.val
 
 def start(event):
-    global running
-    running = not running
+    sim.running = not sim.running
 
 def resetGrid():
-    global u, v, p, total_v, vorticity, ghost_p, ghost_u, ghost_v
-    u = np.zeros((100,100))
-    v = np.zeros((100,100))
-    p = np.zeros((100,100))
-    total_v = np.zeros((100,100))
-    vorticity = np.zeros((100,100))
+    sim.u = sim.np.zeros((100,100))
+    sim.v = sim.np.zeros((100,100))
+    sim.p = sim.np.zeros((100,100))
+    sim.total_v = sim.np.zeros((100,100))
+    sim.vorticity = sim.np.zeros((100,100))
 
-    ghost_u = np.zeros((102,102))
-    ghost_v = np.zeros((102,102))
-    ghost_p = np.zeros((102,102))
+    sim.ghost_u = sim.np.zeros((102,102))
+    sim.ghost_v = sim.np.zeros((102,102))
+    sim.ghost_p = sim.np.zeros((102,102))

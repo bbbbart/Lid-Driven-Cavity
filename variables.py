@@ -1,0 +1,8 @@
+re = 500
+t = 0.05
+wall_v = 1.0
+tolerance = 0.001
+max_i = 2500
+delta_x = 1.0
+delta_y = 1.0
+h = delta_x

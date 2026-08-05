@@ -6,3 +6,4 @@ max_i = 2500
 delta_x = 1.0
 delta_y = 1.0
 h = delta_x
+grid_size = 100

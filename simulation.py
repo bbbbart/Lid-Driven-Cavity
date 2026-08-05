@@ -1,24 +1,24 @@
-from numba import jit
 import matplotlib.widgets as widget
 import matplotlib.pyplot as plt
 import variables as var
 import numpy as np
+from pressure_solver import pressureSolver
 
 pause = False
 running = False
 
-u = np.zeros((100,100))
-v = np.zeros((100,100))
-p = np.zeros((100,100))
-total_v = np.zeros((100,100))
-vorticity = np.zeros((100,100))
+u = np.zeros((var.grid_size, var.grid_size))
+v = np.zeros((var.grid_size, var.grid_size))
+p = np.zeros((var.grid_size, var.grid_size))
+total_v = np.zeros((var.grid_size, var.grid_size))
+vorticity = np.zeros((var.grid_size, var.grid_size))
 
-ghost_u = np.zeros((102,102))
-ghost_v = np.zeros((102,102))
-ghost_p = np.zeros((102,102))
+ghost_u = np.zeros((var.grid_size + 2, var.grid_size + 2))
+ghost_v = np.zeros((var.grid_size + 2,var.grid_size + 2))
+ghost_p = np.zeros((var.grid_size + 2, var.grid_size + 2))
 
-x = np.linspace(50, -50 , 100)
-y = np.linspace(50, -50, 100)
+x = np.linspace((var.grid_size/2), (-1)*(var.grid_size/2), var.grid_size)
+y = np.linspace((var.grid_size/2), (-1)*(var.grid_size/2), var.grid_size)
 
 fig, ax = plt.subplots(1, 3, sharex=True, sharey=True)
 fig.set_size_inches(20, 7)
@@ -49,37 +49,8 @@ start_button = widget.Button(ax = start_button_axes,
                         hovercolor = 'gray')
 
 quiv = ax[0].quiver(x[::4], y[::4], u[::4, ::4], v[::4, ::4], scale=8, pivot='mid')
-v_map = ax[1].imshow(np.fliplr(total_v), vmin=0, vmax=0.5, cmap='viridis', extent=[-50, 50, -50, 50], interpolation = 'bilinear')
-vort_map = ax[2].imshow(np.fliplr(vorticity), vmin=-0.1, vmax=0.1, cmap='jet', extent=[-50, 50, -50, 50], interpolation = 'bilinear')
-
-@jit
-def pressureSolver(grid, ghost, b_):
-        for i in range(var.max_i):
-            error = 0
-            ghost[0, 1:-1] =  grid[0, :]
-            ghost[-1, 1:-1] =  grid[-1, :]
-            ghost[1:-1, -1] = grid[:, -1]
-            ghost[1:-1, 0] = grid[:, 0]
-            for y in range(1, 101):
-                for x in range(1, 101):
-                    old_p = ghost[y,x]
-
-                    g = (ghost[y + 1, x] + ghost[y - 1, x] + ghost[y, x - 1] + ghost[y, x + 1] - (var.h**2)*b_[y-1,x-1])/4 ## pressure solver
-                    ghost[y,x] = ghost[y,x] + 1.7*(g - ghost[y,x])
-
-                    error = max(error, abs(ghost[y,x]-old_p))
-            if (error < var.tolerance):
-                ghost[0, 1:-1] =  grid[0, :]
-                ghost[-1, 1:-1] =  grid[-1, :]
-                ghost[1:-1, -1] = grid[:, -1]
-                ghost[1:-1, 0] = grid[:, 0]
-                return ghost, grid
-                break
-        ghost[0, 1:-1] = grid[0, :]
-        ghost[-1, 1:-1] = grid[-1, :]
-        ghost[1:-1, -1] = grid[:, -1]
-        ghost[1:-1, 0] = grid[:, 0]
-        return ghost, grid
+v_map = ax[1].imshow(np.fliplr(total_v), vmin=0, vmax=0.5, cmap='viridis', extent=[(-1)*(var.grid_size/2), var.grid_size/2, (-1)*(var.grid_size/2), var.grid_size/2], interpolation = 'bicubic')
+vort_map = ax[2].imshow(np.fliplr(vorticity), vmin=-0.1, vmax=0.1, cmap='jet', extent=[(-1)*(var.grid_size/2), var.grid_size/2, (-1)*(var.grid_size/2), var.grid_size/2], interpolation = 'bicubic')
 
 def updateGrid(frame):
     global u, v, p, total_v, vorticity, ghost_p

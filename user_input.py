@@ -18,12 +18,12 @@ def start(event):
     sim.running = not sim.running
 
 def resetGrid():
-    sim.u = sim.np.zeros((100,100))
-    sim.v = sim.np.zeros((100,100))
-    sim.p = sim.np.zeros((100,100))
-    sim.total_v = sim.np.zeros((100,100))
-    sim.vorticity = sim.np.zeros((100,100))
+    sim.u = sim.np.zeros((var.grid_size, var.grid_size))
+    sim.v = sim.np.zeros((var.grid_size, var.grid_size))
+    sim.p = sim.np.zeros((var.grid_size, var.grid_size))
+    sim.total_v = sim.np.zeros((var.grid_size, var.grid_size))
+    sim.vorticity = sim.np.zeros((var.grid_size, var.grid_size))
 
-    sim.ghost_u = sim.np.zeros((102,102))
-    sim.ghost_v = sim.np.zeros((102,102))
-    sim.ghost_p = sim.np.zeros((102,102))
+    sim.ghost_u = sim.np.zeros((var.grid_size + 2, var.grid_size + 2))
+    sim.ghost_v = sim.np.zeros((var.grid_size + 2, var.grid_size + 2))
+    sim.ghost_p = sim.np.zeros((var.grid_size + 2, var.grid_size + 2))

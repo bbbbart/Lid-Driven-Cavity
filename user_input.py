@@ -18,6 +18,9 @@ def start(event):
     sim.running = not sim.running
 
 def resetGrid():
+
+    ## clear grids
+    
     sim.u = sim.np.zeros((var.grid_size, var.grid_size))
     sim.v = sim.np.zeros((var.grid_size, var.grid_size))
     sim.p = sim.np.zeros((var.grid_size, var.grid_size))

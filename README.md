@@ -92,11 +92,10 @@ A heatmap showing the vorticity at each cell. Vorticity measures local rotations
 
 ## UI
 
-<img width="1339" height="583" alt="image" src="https://github.com/user-attachments/assets/b484ad55-2ce1-4549-a124-f9fb118c4848" />
-
 At launch, two sliders can be adjusted before clicking the start button.
 
 Re slider - Can be set from 10 to 5000. Adjusts the Reynolds number, which is the ratio between inertial forces and viscous forces. Low values typically create a large central vortex, while large values typically create more complex flow with small sub-vortices.
+
 Timestep slider - Can be set from 0.05 to 1. Timestep affects the speed of the simulation by changing how much time passes each step. This can also influence stability. Lower values are typically more stable than high values.
 
 When a simulation is running, press `space` to pause and click `r` to reset and go back to the setup menu. If the plots suddenly disappear, it is likely because the numerical solver became unstable. Reset the grid and choose different setup values.

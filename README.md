@@ -1,6 +1,6 @@
 # Lid Driven Cavity
 
-This project uses MatplotLib to visualize a finite difference implementation of a lid cavity using the Navier Stokes equations and the projection method.
+This project uses Matplotlib to visualize a finite difference implementation of a lid cavity using the Navier Stokes equations and the projection method.
 
 ## Features
 
@@ -18,14 +18,14 @@ The Navier Stokes equation is used to model the motion of fluids. The most basic
 
 u = velocity vector
 p = pressure
-Re = reynolds number
+Re = Reynolds number
 t = time
 
-This simulation uses this equation with the projection method. Using this method, an initial velocity is calculated, the pressure poison equation is used to calculate the pressure field, and finally the pressure field is used to adjust the velocity.
+This simulation uses this equation with the projection method. Using this method, an initial velocity is calculated, the pressure Poisson equation is used to calculate the pressure field, and finally the pressure field is used to adjust the velocity.
 
 #### Initial Velocity
 
-The initial velocities of the grid can be calculated with a form of the navier stokes equation without pressure:
+At each timestep, the initial velocities of the grid can be calculated with a form of the Navier Stokes equation without pressure values:
 
 ### x: $\frac{\partial u}{\partial t}=-u\frac{\partial u}{\partial x}-v\frac{\partial u}{\partial y}+\frac{1}{Re}(\frac{\partial ^{2}u}{\partial x^{2}}+\frac{\partial ^{2}u}{\partial y^{2}})$
 
@@ -34,7 +34,7 @@ The initial velocities of the grid can be calculated with a form of the navier s
 u = horizontal velocity
 v = vertical velocity
 
-This simulation uses a more stable implementation of this equation called a first-order upwind, using conditional statements to see which direction the fluid is flowing. These statements then decide which of the cells neighbors should be used in the finite difference approximation. For example a positive horizontal velocity would have the approximation $\frac{u_{i,j}-u_{i-1,j}}{\Delta x}$. A negative velocity would have the approximation of $\frac{u_{i+1,j}-u_{i,j}}{\Delta x}$.
+Equations that use partial differentials need to be put into a finite difference form that approximates derivatives. Earlier versions of the project used central difference, which takes the average of all neighboring cells. The current version uses a more stable method called first-order upwind, which uses conditional statements to check which direction the fluid is flowing. These statements then decide which of the cell's neighbors should be used in the finite difference approximation. For example a positive horizontal velocity would have the approximation $\frac{u_{i,j}-u_{i-1,j}}{\Delta x}$. A negative velocity would have the approximation of $\frac{u_{i+1,j}-u_{i,j}}{\Delta x}$.
 
 ### Pressure
 
@@ -42,9 +42,9 @@ In a simulation, the amount of fluid leaving must be equal to the amount enterin
 
 ### $\nabla \cdot u = 0$
 
-Continuity is maintained by using the pressure Poison equation, which adjusts velocity to control the amount of fluid crossing the simulation boundary. After calculating a temporary velocity, the divergence from continuity can be found by the equation:
+Continuity is maintained by using the pressure Poisson equation, which creates a pressure field that is used to adjust the velocity. After calculating a temporary velocity, the divergence from continuity can be found by the equation:
 
-### $b_{i,j}=\frac{1}{\nabla t}\Delta \cdot u^{*}$
+### $b_{i,j}=\frac{1}{\Delta t}\nabla \cdot u^{*}$
 
 where b is the source term which is used to calculate the pressure field.
 
@@ -54,7 +54,7 @@ Once b is calculated, pressure can be adjusted by repeatedly solving the finite 
 
 This equation adjusts the pressure field to better maintain continuity. The equation repeats until the pressure difference between one pressure iteration and another is within a tolerance of 0.001.
 
-To speed up the solver, this simulation uses a form of the Gauss Seidel method called successive over-relaxation. In Gauss Seidel, once a cell in the grid is calculated, it is immediately used in the next calculation. The simulation does this by using a for loop that updates one cell at a time. Successive over-relaxation uses a multiplier on the newly calculated pressure, in this case a multiplier of 1.7. This causes the pressure to jump ahead each iteration, closer to the final pressure field.
+To speed up the solver, this simulation uses a form of the Gauss-Seidel method called successive over-relaxation. In Gauss Seidel, once a cell in the grid is calculated, it is immediately used in the next calculation. The simulation does this by using a for loop that updates one cell at a time. Successive over-relaxation uses a sort of multiplier on the newly calculated pressure. This causes the pressure to jump ahead each iteration, closer to the final pressure field. The default multiplier value is 1.7.
 
 ### Velocity Correction
 
@@ -65,16 +65,29 @@ After solving for the pressure field, the velocity is adjusted using:
 
 ### Boundary Conditions
 
-To maintain boundary conditions and for use in calculations, the simulation uses a ghost grid which is larger than the simulation grid. On a top moving wall, a dirichlet (slip) condition sets the the cells on the border equal to the wall velocity For stationary walls, a no slip condition sets the velocity on the wall to zero.
+To maintain boundary conditions and for use in calculations, the simulation uses a ghost grid which is larger than the simulation grid. On a top moving wall, a Dirichlet (no-slip) condition sets the cells on the border equal to the wall velocity. For stationary walls, another no-slip condition sets the velocity on the wall to zero.
+
+### Grids
+
+The window shows 3 different grids.
+
+#### Quiver Plot: 
+A grid of arrows that shows the direction of fluid flow.
+
+#### Total Velocity: 
+A heatmap showing the magnitude of the total velocity at each cell.
+
+#### Vorticity: 
+A heatmap showing the vorticity at each cell. Vorticity measures local rotations that happen at velocity gradients (shear flow).
 
 ### UI
 
 At launch, two sliders can be adjusted before clicking the start button.
 
-Re slider - Can be set from 10 to 5000. Adjusts the reynolds number, which is the ratio between inertial forces and viscous forces. Low values create a large central vortex, while large values create more complex flow with small sub-vortices.
+Re slider - Can be set from 10 to 5000. Adjusts the Reynolds number, which is the ratio between inertial forces and viscous forces. Low values typically create a large central vortex, while large values typically create more complex flow with small sub-vortices.
 Timestep slider = Can be set from 0.05 to 1. Timestep affects the speed of the simulation by changing how much time passes each step. This can also influence stability. Lower values are typically more stable than high values.
 
-When a simulation is running, press `space` to pause and click `r` to reset and go back to the setup menu. If the plots suddenly disappears, it is likely because the numerical solver became unstable. Reset the grid and choose different setup values.
+When a simulation is running, press `space` to pause and click `r` to reset and go back to the setup menu. If the plots suddenly disappear, it is likely because the numerical solver became unstable. Reset the grid and choose different setup values.
 
 ## Requirements and Running
 

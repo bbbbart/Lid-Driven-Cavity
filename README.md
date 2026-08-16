@@ -1,6 +1,6 @@
-# Lid Driven Cavity
+# Lid-Driven Cavity
 
-This project uses Matplotlib to visualize a finite difference implementation of a lid driven cavity.
+This project uses Matplotlib to visualize a finite difference implementation of a lid-driven cavity.
 
 ## Features
 

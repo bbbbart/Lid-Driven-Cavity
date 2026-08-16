@@ -10,6 +10,14 @@ This project uses Matplotlib to visualize a finite difference implementation of 
 - Heat maps showing total velocity and vorticity
 - Quiver plot showing the direction of flow
 
+### Disclaimer
+
+Although this project is based on real life physics and equations, it is not at the accuracy of professional solvers. Although the flow is relatively accurate, you will often see faint checkerboard patterns and other artifacts, especially on the heatmaps. Although there are fixes that can reduce these artifacts, they are complex and outside the scope of this project.
+
+#### Assumptions
+
+The fluid in this simulation is assumed to be incompressible (constant density) and the lid is assumed to be at a constant velocity of 1.0.
+
 ### Navier Stokes Equation
 
 The Navier Stokes equation is used to model the motion of fluids. The most basic dimensionless form of the equation is:
@@ -34,7 +42,7 @@ At each timestep, the initial velocities of the grid can be calculated with a fo
 u = horizontal velocity
 v = vertical velocity
 
-Equations that use partial differentials need to be put into a finite difference form that approximates derivatives. Earlier versions of the project used central difference, which takes the average of all neighboring cells. The current version uses a more stable method called first-order upwind, which uses conditional statements to check which direction the fluid is flowing. These statements then decide which of the cell's neighbors should be used in the finite difference approximation. For example a positive horizontal velocity would have the approximation $\frac{u_{i,j}-u_{i-1,j}}{\Delta x}$. A negative velocity would have the approximation of $\frac{u_{i+1,j}-u_{i,j}}{\Delta x}$.
+Partial differential equations need to be put into a finite difference form that approximates derivatives. Earlier versions of the project used central difference, which takes the average of all neighboring cells. The current version uses a more stable method called first-order upwind, which uses conditional statements to check which direction the fluid is flowing. These statements then decide which of the cell's neighbors should be used in the finite difference approximation. For example a positive horizontal velocity would have the approximation $\frac{u_{i,j}-u_{i-1,j}}{\Delta x}$. A negative velocity would have the approximation of $\frac{u_{i+1,j}-u_{i,j}}{\Delta x}$.
 
 ### Pressure
 
@@ -54,7 +62,7 @@ Once b is calculated, pressure can be adjusted by repeatedly solving the finite 
 
 This equation adjusts the pressure field to better maintain continuity. The equation repeats until the pressure difference between one pressure iteration and another is within a tolerance of 0.001.
 
-To speed up the solver, this simulation uses a form of the Gauss-Seidel method called successive over-relaxation. In Gauss Seidel, once a cell in the grid is calculated, it is immediately used in the next calculation. The simulation does this by using a for loop that updates one cell at a time. Successive over-relaxation uses a sort of multiplier on the newly calculated pressure. This causes the pressure to jump ahead each iteration, closer to the final pressure field. The default multiplier value is 1.7.
+To speed up the solver, this simulation uses a form of the Gauss-Seidel method called successive over-relaxation. In Gauss-Seidel, once a cell in the grid is calculated, it is immediately used in the next calculation. The simulation does this by using a for loop that updates one cell at a time. Successive over-relaxation uses a sort of multiplier on the newly calculated pressure. This causes the pressure to jump ahead each iteration, closer to the final pressure field. The default multiplier value is 1.7.
 
 ### Velocity Correction
 
@@ -65,7 +73,7 @@ After solving for the pressure field, the velocity is adjusted using:
 
 ### Boundary Conditions
 
-To maintain boundary conditions and for use in calculations, the simulation uses a ghost grid which is larger than the simulation grid. On a top moving wall, a Dirichlet (no-slip) condition sets the cells on the border equal to the wall velocity. For stationary walls, another no-slip condition sets the velocity on the wall to zero.
+To maintain boundary conditions and for use in calculations, the simulation uses a ghost grid which is larger than the simulation grid. Each side uses a Dirichlet condition, with sets the wall velocity to a constant value. On the top moving wall, the condition sets the border cells equal to the wall velocity. For stationary walls, another condition sets the velocity on the wall to zero.
 
 ### Grids
 
@@ -98,3 +106,11 @@ or
 Clone the repository and run `pip install -r requirements.txt` to install all required libraries.
 
 ## More Info
+
+[CFD Basics](https://open.oregonstate.education/intermediate-fluid-mechanics/chapter/xi-cfd-basics/)
+
+[Navier Stokes Equations](https://en.wikipedia.org/wiki/Navier%E2%80%93Stokes_equations)
+
+[Discretization of Navier Stokes](https://cfd.university/learn/10-key-concepts-everyone-must-understand-in-cfd/how-to-discretise-the-navier-stokes-equations/)
+
+[Lid Driven Cavity Basics](https://www.cfd-online.com/Wiki/Lid-driven_cavity_problem)

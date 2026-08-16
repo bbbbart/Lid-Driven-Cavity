@@ -1,6 +1,6 @@
 # Lid Driven Cavity
 
-This project uses Matplotlib to visualize a finite difference implementation of a lid cavity using the Navier Stokes equations and the projection method.
+This project uses Matplotlib to visualize a finite difference implementation of a lid driven cavity using the Navier Stokes equations and the projection method.
 
 ## Features
 

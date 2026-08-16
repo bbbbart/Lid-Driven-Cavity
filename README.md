@@ -1,5 +1,7 @@
 # Lid-Driven Cavity
 
+<img width="1988" height="698" alt="Recording 2026-08-16 174242" src="https://github.com/user-attachments/assets/64888cf0-6d5b-4605-b79a-97a16b545785" />
+
 This project uses Matplotlib to visualize a finite difference implementation of a lid-driven cavity.
 
 ## Features
@@ -89,6 +91,8 @@ A heatmap showing the magnitude of the total velocity at each cell.
 A heatmap showing the vorticity at each cell. Vorticity measures local rotations that happen at velocity gradients (shear flow).
 
 ## UI
+
+<img width="1339" height="583" alt="image" src="https://github.com/user-attachments/assets/b484ad55-2ce1-4549-a124-f9fb118c4848" />
 
 At launch, two sliders can be adjusted before clicking the start button.
 
